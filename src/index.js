@@ -60,6 +60,15 @@ app.delete('/api/persons/:id', (request, response) => {
 
 app.post('/api/persons', (request, response) => {
     const newEntry = request.body
+    if (!newEntry.name) {
+        return response.status(400).json({error: 'name is missing'})
+    }
+    if (!newEntry.number) {
+        return response.status(400).json({error: 'number is missing'})
+    }
+    if (phonebook.find((entry) => newEntry.name === entry.name)) {
+        return response.status(400).json({error: `${newEntry.name} already in use`})
+    }
     while (true) { // this must be inefficient, oh well, we should use a hash table instead
         const id = Math.floor(Math.random() * 1000000)
         if (!phonebook.find((entry) => entry.id === id)) {

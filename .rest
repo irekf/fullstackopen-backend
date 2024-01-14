@@ -18,3 +18,25 @@ Content-Type: application/json
   "number": "999-111-121212"
 }
 ###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "number": "999-111-121212"
+}
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "Jack K"
+}
+###
+POST http://localhost:3001/api/persons
+Content-Type: application/json
+
+{
+  "name": "Jack K",
+  "number": "999-111-121212"
+}
+###
