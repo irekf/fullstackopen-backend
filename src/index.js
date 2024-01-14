@@ -1,7 +1,7 @@
 const express = require('express')
 const app = express()
 
-const phonebook = [
+let phonebook = [
     {
         "id": 1,
         "name": "Arto Hellas",
@@ -33,6 +33,24 @@ app.get('/api/persons/:id', (request, response) => {
     const entry = phonebook.find((value) => id === value.id)
     if (entry) {
         response.json(entry)
+    } else {
+        response.status(404).send(`Entry not found for id ${id}`)
+    }
+})
+
+app.delete('/api/persons/:id', (request, response) => {
+    const id = Number(request.params.id)
+    let found = false
+    phonebook = phonebook.filter((entry) => {
+        if (id === entry.id) {
+            found = true
+            return false
+        } else {
+            return true
+        }
+    })
+    if (found) {
+        response.status(204).end()
     } else {
         response.status(404).send(`Entry not found for id ${id}`)
     }
