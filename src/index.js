@@ -1,6 +1,8 @@
 const express = require('express')
 const app = express()
 
+app.use(express.json())
+
 let phonebook = [
     {
         "id": 1,
@@ -54,6 +56,18 @@ app.delete('/api/persons/:id', (request, response) => {
     } else {
         response.status(404).send(`Entry not found for id ${id}`)
     }
+})
+
+app.post('/api/persons', (request, response) => {
+    const newEntry = request.body
+    while (true) { // this must be inefficient, oh well, we should use a hash table instead
+        const id = Math.floor(Math.random() * 1000000)
+        if (!phonebook.find((entry) => entry.id === id)) {
+            phonebook.push({id: id, name: newEntry.name, number: newEntry.number})
+            break
+        }
+    }
+    response.json(newEntry)
 })
 
 app.get('/info', (request, response) => {
