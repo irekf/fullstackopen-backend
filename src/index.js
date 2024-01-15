@@ -2,7 +2,13 @@ const express = require('express')
 const app = express()
 const morgan = require('morgan')
 
-app.use(morgan('tiny'))
+morgan.token('post_body', (req) => {
+    return JSON.stringify(req.body)
+})
+
+app.use(morgan('tiny', {skip: (req, resp) => req.method === 'POST'}))
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms :post_body',
+    {skip: (req, res) => req.method !== 'POST'}))
 app.use(express.json())
 
 let phonebook = [
