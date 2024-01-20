@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "update:ui": "cd deps/frontend && git fetch && git checkout main && git pull && cd .. && git commit frontend -m \"Update the frontend dep\"",
+    "build:ui": "cd deps/frontend/part2/phonebook && npm install && npm run build && cp -r dist ../../../../frontend",
+    "deploy:full": "npm run build:ui && git add frontend && git commit -m \"Frontend build\" && git push"
   },
   "author": "",
   "license": "MIT",

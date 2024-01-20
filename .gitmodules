@@ -1,0 +1,3 @@
+[submodule "deps/frontend"]
+	path = deps/frontend
+	url = https://github.com/irekf/fullstackopen.git
