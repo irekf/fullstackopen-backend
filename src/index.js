@@ -84,6 +84,7 @@ app.post('/api/persons', (request, response) => {
         const id = Math.floor(Math.random() * 1000000)
         if (!phonebook.find((entry) => entry.id === id)) {
             phonebook.push({id: id, name: newEntry.name, number: newEntry.number})
+            newEntry.id = id
             break
         }
     }
