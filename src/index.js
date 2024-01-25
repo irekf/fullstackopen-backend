@@ -2,6 +2,9 @@ const express = require('express')
 const app = express()
 const morgan = require('morgan')
 const cors = require('cors')
+const mongoose = require("mongoose");
+
+const password = process.argv[2]
 
 morgan.token('post_body', (req) => {
     return JSON.stringify(req.body)
@@ -14,85 +17,73 @@ app.use(express.json())
 app.use(cors())
 app.use(express.static('frontend'))
 
-let phonebook = [
-    {
-        "id": 1,
-        "name": "Arto Hellas",
-        "number": "040-123456"
-    },
-    {
-        "id": 2,
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523"
-    },
-    {
-        "id": 3,
-        "name": "Dan Abramov",
-        "number": "12-43-234345"
-    },
-    {
-        "id": 4,
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122"
-    }
-]
+const url =
+    `mongodb+srv://fullstackopen:${password}@cluster0.iybkzer.mongodb.net/phonebookApp?retryWrites=true&w=majority`
+mongoose.set('strictQuery', false)
+mongoose.connect(url)
+
+const personSchema = new mongoose.Schema({
+    name: {type: String, unique: true},
+    number: String,
+})
+
+const Person = mongoose.model('Person', personSchema)
 
 app.get('/api/persons', (request, response) => {
-    response.json(phonebook)
+    Person.find({}).then(persons => {
+        response.json(persons)
+    }).catch((error) => {
+        response.status(500).send(`Internal error: ${error}`)
+    })
 })
 
 app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const entry = phonebook.find((value) => id === value.id)
-    if (entry) {
-        response.json(entry)
-    } else {
-        response.status(404).send(`Entry not found for id ${id}`)
-    }
+    const id = request.params.id
+    Person.findById(id).then(person => {
+        if (person) {
+            response.json(person)
+        } else {
+            response.status(404).send(`Entry not found for id ${id}`)
+        }
+    }).catch(error => {
+        response.status(500).send(`Internal error: ${error}`)
+    })
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    let found = false
-    phonebook = phonebook.filter((entry) => {
-        if (id === entry.id) {
-            found = true
-            return false
+    const id = request.params.id
+    Person.findByIdAndDelete(id).then(person => {
+        if (person) {
+            response.status(204).end()
         } else {
-            return true
+            response.status(404).send(`Entry not found for id ${id}`)
         }
+    }).catch(error => {
+        response.status(500).send(`Internal error: ${error}`)
     })
-    if (found) {
-        response.status(204).end()
-    } else {
-        response.status(404).send(`Entry not found for id ${id}`)
-    }
 })
 
 app.post('/api/persons', (request, response) => {
-    const newEntry = request.body
-    if (!newEntry.name) {
+    if (!request.body.name) {
         return response.status(400).json({error: 'name is missing'})
     }
-    if (!newEntry.number) {
+    if (!request.body.number) {
         return response.status(400).json({error: 'number is missing'})
     }
-    if (phonebook.find((entry) => newEntry.name === entry.name)) {
-        return response.status(400).json({error: `${newEntry.name} already in use`})
-    }
-    while (true) { // this must be inefficient, oh well, we should use a hash table instead
-        const id = Math.floor(Math.random() * 1000000)
-        if (!phonebook.find((entry) => entry.id === id)) {
-            phonebook.push({id: id, name: newEntry.name, number: newEntry.number})
-            newEntry.id = id
-            break
-        }
-    }
-    response.json(newEntry)
+    const person = new Person(request.body)
+    person.save().then(result => {
+        response.json(result)
+    }).catch(error => {
+        response.status(500).send(`Internal error: ${error}`)
+    })
 })
 
 app.get('/info', (request, response) => {
-    response.send(`<p>Phonebook has info for ${phonebook.length} people</p><p>${new Date()}</p>`)
+    Person.countDocuments({}).then(count => {
+        response.send(`<p>Phonebook has info for ${count} people</p><p>${new Date()}</p>`)
+    }).catch(error => {
+        response.status(500).send(`Internal error: ${error}`)
+    })
 })
 
 const PORT = process.env.PORT || 3001
