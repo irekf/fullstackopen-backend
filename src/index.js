@@ -18,10 +18,10 @@ app.use(morgan(':method :url :status :res[content-length] - :response-time ms :p
     {skip: (req, res) => req.method !== 'POST'}))
 app.use(cors())
 
-const url =
+const MONGO_URI = process.env.MONGO_URI ||
     `mongodb+srv://fullstackopen:${password}@cluster0.iybkzer.mongodb.net/phonebookApp?retryWrites=true&w=majority`
 mongoose.set('strictQuery', false)
-mongoose.connect(url)
+mongoose.connect(MONGO_URI)
 
 const personSchema = new mongoose.Schema({
     name: {
