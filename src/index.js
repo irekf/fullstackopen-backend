@@ -24,8 +24,17 @@ mongoose.set('strictQuery', false)
 mongoose.connect(url)
 
 const personSchema = new mongoose.Schema({
-    name: {type: String, unique: true},
-    number: String,
+    name: {
+        type: String,
+        unique: true,
+        minLength: 3,
+        required: true,
+    },
+    number: {
+        type: String,
+        minLength: 1,
+        required: true,
+    },
 })
 
 const Person = mongoose.model('Person', personSchema)
@@ -42,7 +51,7 @@ app.get('/api/persons/:id', (request, response, next) => {
         if (person) {
             response.json(person)
         } else {
-            response.status(404).send(`Entry not found for id ${id}`)
+            response.status(404).json({error: `Entry not found for id ${id}`})
         }
     }).catch(error => next(error))
 })
@@ -53,18 +62,12 @@ app.delete('/api/persons/:id', (request, response, next) => {
         if (person) {
             response.status(204).end()
         } else {
-            response.status(404).send(`Entry not found for id ${id}`)
+            response.status(404).json({error: `Entry not found for id ${id}`})
         }
     }).catch(error => next(error))
 })
 
 app.post('/api/persons', (request, response, next) => {
-    if (!request.body.name) {
-        return response.status(400).json({error: 'name is missing'})
-    }
-    if (!request.body.number) {
-        return response.status(400).json({error: 'number is missing'})
-    }
     const person = new Person(request.body)
     person.save().then(result => {
         response.json(result)
@@ -75,13 +78,15 @@ app.put('/api/persons/:id', (request, response, next) => {
     const id = request.params.id
     const name = request.body.name
     const number = request.body.number
-    Person.findByIdAndUpdate(id, {name, number}, {new: true}).then(person => {
-        if (person) {
-            response.json(person)
-        } else {
-            response.status(404).send(`Entry not found for id ${id}`)
-        }
-    }).catch(error => next(error))
+    Person.findByIdAndUpdate(id, {name, number}, {new: true, runValidators: true, context: 'query'})
+        .then(person => {
+            if (person) {
+                response.json(person)
+            } else {
+                response.status(404).json({error: `Entry not found for id ${id}`})
+            }
+        })
+        .catch(error => next(error))
 })
 
 app.get('/info', (request, response, next) => {
@@ -98,8 +103,10 @@ app.listen(PORT, () => {
 app.use((error, request, response, next) => {
     console.error(error.message)
     if (error.name === 'CastError') {
-        return response.status(400).send('malformatted id')
+        return response.status(400).json({error: 'malformatted id'})
+    } else if (error.name === 'ValidationError') {
+        return response.status(400).json({error: `${error.message}`})
     } else {
-        return response.status(500).send(`Internal error: ${error.name}`)
+        return response.status(500).json({error: `${error.message}`})
     }
 })
